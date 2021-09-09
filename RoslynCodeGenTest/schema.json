@@ -1,0 +1,18 @@
+{
+  "types": [
+    {
+      "typeName": "ControllerClass",
+      "nameSpace": [        
+        "MediatR",        
+        "Microsoft.AspNetCore.Mvc",        
+        "Microsoft.AspNetCore.OData.Formatter",        
+        "Microsoft.AspNetCore.OData.Routing.Controllers",        
+        "System",        
+        "System.Collections.Generic",        
+        "System.Linq",        
+        "System.Threading.Tasks"
+      ]
+
+    },    
+  ]
+}
