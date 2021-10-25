@@ -42,7 +42,7 @@ namespace RoslynCodeGenTest
             var @namespace = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName("ODataBatching8.Controllers")).NormalizeWhitespace();
 
             //  Create a class: (class Order)
-            var classDeclaration = SyntaxFactory.ClassDeclaration("BooksController");
+            var classDeclaration = SyntaxFactory.ClassDeclaration(name + "Controller");
 
             // Add the public modifier: (public class Order)
             classDeclaration = classDeclaration.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
@@ -70,55 +70,17 @@ namespace RoslynCodeGenTest
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword));
 
             //method Body for base method           
-            var controllerBody = SyntaxFactory.ParseStatement("this.dbContextFactory = dbContextFactory");
-
-            var dBContextParameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier("dbContextFactory"))
-                .WithType(SyntaxFactory.ParseTypeName("IDbContextFactory<BooksContext>"));
-
-            //create the BookContextFactory  base method
-            var controllerMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName(""), name)
-                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))   
-                .AddParameterListParameters(dBContextParameter)
-                .WithBody(SyntaxFactory.Block(controllerBody));
+            MethodDeclarationSyntax controllerMethod = GenerateControllerConstructor(name);
 
             //Generate the Get Method 
-            var getBodyCode = new StringBuilder();
-            getBodyCode.AppendLine("dbContext = this.dbContextFactory.CreateDbContext();");
-            getBodyCode.AppendLine("return Ok(dbContext." + name + ");");
-
-            var getBody = (BlockSyntax)SyntaxFactory.ParseStatement("{" + getBodyCode.ToString() + "}");
-            
             var enableQueryAttribute = SyntaxFactory.AttributeList(SyntaxFactory.SingletonSeparatedList(
-                SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("EnableQuery")))
-                ).NormalizeWhitespace();
-            
-            //Get Method
-            var getMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName("IActionResult"), "Get")
-                .AddAttributeLists(enableQueryAttribute)
-                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                .WithBody(getBody);
+               SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("EnableQuery")))
+               ).NormalizeWhitespace();
+
+            MethodDeclarationSyntax getMethod = GenerateGetMethod(name, enableQueryAttribute);
 
             //GetByID    
-            var getByIdCode = new StringBuilder();
-            getByIdCode.AppendLine("dbContext = this.dbContextFactory.CreateDbContext();");
-            getByIdCode.AppendLine("return Ok(await dbContext." + name + ".Where(x=>x.Id == key).FirstOrDefaultAsync());");
-
-            var getByIdBody = (BlockSyntax)SyntaxFactory.ParseStatement("{" + getByIdCode + "}");
-
-            var fromODataURI = SyntaxFactory.AttributeList(SyntaxFactory.SingletonSeparatedList(
-                SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("FromODataUri"))
-                )).NormalizeWhitespace();
-
-            var getByIdParameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier("key"))
-                .WithType(SyntaxFactory.ParseTypeName("Guid"))
-                .AddAttributeLists(fromODataURI);
-                
-
-            var getByIdMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName("Task<IActionResult>"), "Get")
-                .AddAttributeLists(enableQueryAttribute)
-                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                .AddParameterListParameters(getByIdParameter)
-                .WithBody(getByIdBody);
+            MethodDeclarationSyntax getByIdMethod = GenerateGetByIdMethod(name, enableQueryAttribute);
 
             var methods = new List<MemberDeclarationSyntax>();
             methods.Add(fieldFactoryDeclaration);
@@ -143,6 +105,64 @@ namespace RoslynCodeGenTest
             streamWriter.Write(code);
             streamWriter.Close();
             return result;
+        }
+
+        private static MethodDeclarationSyntax GenerateControllerConstructor(string name)
+        {
+            var controllerBody = SyntaxFactory.ParseStatement("this.dbContextFactory = dbContextFactory;");
+
+            var dBContextParameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier("dbContextFactory"))
+                .WithType(SyntaxFactory.ParseTypeName("IDbContextFactory<BooksContext>"));
+
+            //create the BookContextFactory  base method
+            var controllerMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName(""), name)
+                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
+                .AddParameterListParameters(dBContextParameter)
+                .WithBody(SyntaxFactory.Block(controllerBody));
+            return controllerMethod;
+        }
+
+        private static MethodDeclarationSyntax GenerateGetMethod(string name, AttributeListSyntax enableQueryAttribute)
+        {
+            var getBodyCode = new StringBuilder();
+            getBodyCode.AppendLine("dbContext = this.dbContextFactory.CreateDbContext();");
+            getBodyCode.AppendLine("return Ok(dbContext." + name + ");");
+
+            var getBody = (BlockSyntax)SyntaxFactory.ParseStatement("{" + getBodyCode.ToString() + "}");
+
+
+
+            //Get Method
+            var getMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName("IActionResult"), "Get")
+                .AddAttributeLists(enableQueryAttribute)
+                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
+                .WithBody(getBody);
+            return getMethod;
+        }
+
+        private static MethodDeclarationSyntax GenerateGetByIdMethod(string name, AttributeListSyntax enableQueryAttribute)
+        {
+            var getByIdCode = new StringBuilder();
+            getByIdCode.AppendLine("dbContext = this.dbContextFactory.CreateDbContext();");
+            getByIdCode.AppendLine("return Ok(await dbContext." + name + ".Where(x=>x.Id == key).FirstOrDefaultAsync());");
+
+            var getByIdBody = (BlockSyntax)SyntaxFactory.ParseStatement("{" + getByIdCode + "}");
+
+            var fromODataURI = SyntaxFactory.AttributeList(SyntaxFactory.SingletonSeparatedList(
+                SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("FromODataUri"))
+                )).NormalizeWhitespace();
+
+            var getByIdParameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier("key"))
+                .WithType(SyntaxFactory.ParseTypeName("Guid"))
+                .AddAttributeLists(fromODataURI);
+
+
+            var getByIdMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName("Task<IActionResult>"), "Get")
+                .AddAttributeLists(enableQueryAttribute)
+                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
+                .AddParameterListParameters(getByIdParameter)
+                .WithBody(getByIdBody);
+            return getByIdMethod;
         }
     }
 }
