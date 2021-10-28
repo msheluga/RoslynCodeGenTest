@@ -55,10 +55,22 @@ namespace RoslynCodeGenTest
             var variableFactoryDeclaration = SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName("IDbContextFactory<BooksContext>"))
                 .AddVariables(SyntaxFactory.VariableDeclarator("dbContextFactory"));
 
+            //var es = SyntaxFactory.ParseExpression("new DbContextOptionsBuilder<BooksContext>().UseInMemoryDatabase(databaseName: \"BooksContext\").Options ");
+            //SyntaxTrivia space = SyntaxFactory.SyntaxTrivia(SyntaxKind.WhitespaceTrivia, " ");
+            //EqualsValueClauseSyntax evc = SyntaxFactory.EqualsValueClause(es).WithLeadingTrivia(space);
+
+            //var secondVariable = SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName("DbContextOptionsBuilder<BooksContext>"))               
+            //    .AddVariables(SyntaxFactory.VariableDeclarator("dbContextFactory")
+            //     .WithInitializer(evc));
+            
+
             // Create a field declaration: (private readonly IDbContextFactory<BooksContext> dbContextFactory;)
             var fieldFactoryDeclaration = SyntaxFactory.FieldDeclaration(variableFactoryDeclaration)
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword));
+
+            //var field2FactoryDeclaration = SyntaxFactory.FieldDeclaration(secondVariable)
+            //    .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword));
 
             // Create a IDBContextFactory variable: (IDbContextFactory<BooksContext> dbContextFactory;)
             var variableContextDeclaration = SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName("BooksContext"))
@@ -84,6 +96,7 @@ namespace RoslynCodeGenTest
 
             var methods = new List<MemberDeclarationSyntax>();
             methods.Add(fieldFactoryDeclaration);
+            //methods.Add(field2FactoryDeclaration);
             methods.Add(fieldContextDeclaration);
             methods.Add(controllerMethod);
             methods.Add(getMethod);
