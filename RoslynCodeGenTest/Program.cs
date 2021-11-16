@@ -30,6 +30,7 @@ namespace RoslynCodeGenTest
                 {
                     Console.WriteLine(item.Name);
                     await GenerateCode.GenerateController(item.Name);
+                    await PopulateDB.GenerateTableandField(item);
                 }
             }
         }
