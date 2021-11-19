@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Humanizer;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
@@ -42,14 +43,14 @@ namespace RoslynCodeGenTest
             var @namespace = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName("ODataBatching8.Controllers")).NormalizeWhitespace();
 
             //  Create a class: (class Order)
-            var classDeclaration = SyntaxFactory.ClassDeclaration(name + "Controller");
+            var classDeclaration = SyntaxFactory.ClassDeclaration(name.Pluralize() + "Controller");
 
             // Add the public modifier: (public class Order)
             classDeclaration = classDeclaration.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
 
             // Inherit ODataController (public class BooksController : ControllerBase)
             classDeclaration = classDeclaration.AddBaseListTypes(
-                SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("ODataControllerBase")));
+                SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("ControllerBase")));
 
             // Create a IDBContextFactory variable: (IDbContextFactory<BooksContext> dbContextFactory;)
             var variableFactoryDeclaration = SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName("IDbContextFactory<BooksContext>"))
@@ -78,21 +79,20 @@ namespace RoslynCodeGenTest
 
             // Create a field declaration: (private readonly IDbContextFactory<BooksContext> dbContextFactory;)
             var fieldContextDeclaration = SyntaxFactory.FieldDeclaration(variableContextDeclaration)
-                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
-                .AddModifiers(SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword));
+                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword));
 
             //method Body for base method           
-            MethodDeclarationSyntax controllerMethod = GenerateControllerConstructor(name);
+            MethodDeclarationSyntax controllerMethod = GenerateControllerConstructor(name.Pluralize());
 
             //Generate the Get Method 
             var enableQueryAttribute = SyntaxFactory.AttributeList(SyntaxFactory.SingletonSeparatedList(
                SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("EnableQuery")))
                ).NormalizeWhitespace();
 
-            MethodDeclarationSyntax getMethod = GenerateGetMethod(name, enableQueryAttribute);
+            MethodDeclarationSyntax getMethod = GenerateGetMethod(name.Pluralize(), enableQueryAttribute);
 
             //GetByID    
-            MethodDeclarationSyntax getByIdMethod = GenerateGetByIdMethod(name, enableQueryAttribute);
+            MethodDeclarationSyntax getByIdMethod = GenerateGetByIdMethod(name.Pluralize(), enableQueryAttribute);
 
             var methods = new List<MemberDeclarationSyntax>();
             methods.Add(fieldFactoryDeclaration);
@@ -114,7 +114,7 @@ namespace RoslynCodeGenTest
                 .NormalizeWhitespace()
                 .ToFullString();
 
-            await using var streamWriter = new StreamWriter("c:\\code-gen\\" + name + ".cs");
+            await using var streamWriter = new StreamWriter("c:\\code-gen\\" + name.Pluralize() + "Controller.cs");
             streamWriter.Write(code);
             streamWriter.Close();
             return result;
@@ -128,7 +128,7 @@ namespace RoslynCodeGenTest
                 .WithType(SyntaxFactory.ParseTypeName("IDbContextFactory<BooksContext>"));
 
             //create the BookContextFactory  base method
-            var controllerMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName(""), name)
+            var controllerMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName(""), name+"Controller")
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                 .AddParameterListParameters(dBContextParameter)
                 .WithBody(SyntaxFactory.Block(controllerBody));
@@ -173,6 +173,7 @@ namespace RoslynCodeGenTest
             var getByIdMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName("Task<IActionResult>"), "Get")
                 .AddAttributeLists(enableQueryAttribute)
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
+                .AddModifiers(SyntaxFactory.Token(SyntaxKind.AsyncKeyword))
                 .AddParameterListParameters(getByIdParameter)
                 .WithBody(getByIdBody);
             return getByIdMethod;
