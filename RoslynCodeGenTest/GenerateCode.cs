@@ -47,6 +47,7 @@ namespace RoslynCodeGenTest
 
             // Add the public modifier: (public class Order)
             classDeclaration = classDeclaration.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
+            classDeclaration = classDeclaration.AddModifiers(SyntaxFactory.Token(SyntaxKind.PartialKeyword));
 
             // Inherit ODataController (public class BooksController : ControllerBase)
             classDeclaration = classDeclaration.AddBaseListTypes(
